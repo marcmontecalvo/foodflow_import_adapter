@@ -1,0 +1,34 @@
+{
+  "CurrentPage": 1,
+  "TotalPages": 1,
+  "TotalCount": 3,
+  "CurrentTransactions": [
+    {
+      "TransactionKey": "FIXTURE_KEY_TOO_RECENT",
+      "ReceiptId": "listhash-0003",
+      "FacilityId": 9999,
+      "FacilityName": "Sample Plaza",
+      "TransactionDate": "2020-02-01T09:00:00",
+      "Amount": 12.0,
+      "ItemCount": 3
+    },
+    {
+      "TransactionKey": "FIXTURE_KEY_UNPUBLISHED",
+      "ReceiptId": "listhash-0002",
+      "FacilityId": 9999,
+      "FacilityName": "Sample Plaza",
+      "TransactionDate": "2020-01-20T18:15:00",
+      "Amount": 3.5,
+      "ItemCount": 1
+    },
+    {
+      "TransactionKey": "FIXTURE_KEY_1",
+      "ReceiptId": "listhash-0001",
+      "FacilityId": 9999,
+      "FacilityName": "Sample Plaza",
+      "TransactionDate": "2020-01-15T16:38:00",
+      "Amount": 13.56,
+      "ItemCount": 5
+    }
+  ]
+}

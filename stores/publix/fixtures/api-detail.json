@@ -1,0 +1,27 @@
+{
+  "ReceiptLogoId": 1,
+  "ReceiptText": "  GALA APPLES\\n  1.50 lb @     2.00/ lb        3.00   F\\n  OAT MILK                      4.49   F\\n  GREEK YOGURT                  6.00   F\\n  GREEK YOGURT                  6.00   F\\n     Promotion                 -6.00   F\\n  VENDOR COUPON                -1.00   F\\n    Order Total                12.49\\n      Sales Tax                 1.07\\n    Grand Total                13.56\\n      Receipt ID: 9999 A1B 100 200\\n01/15/2020 16:38 S9999  R110 6985 C0122\\n",
+  "OrderTotal": 12.49,
+  "TaxAmount": 1.07,
+  "GrandTotal": 13.56,
+  "Products": [
+    { "ItemId": 700001, "ItemName": "Gala Apples", "SizeDescription": "", "RetailSubSectionNumber": "100", "UPC": "4133" },
+    { "ItemId": 700002, "ItemName": "Example Farms Oat Milk", "SizeDescription": "64 oz", "RetailSubSectionNumber": "200", "UPC": "0001234500012" },
+    { "ItemId": 700003, "ItemName": "Sample&#39;s Greek Yogurt", "SizeDescription": "32 oz", "RetailSubSectionNumber": "210", "UPC": "0001234500029" }
+  ],
+  "ReceiptLineItems": [
+    { "ItemCode": "00000000004133", "ItemSeqNo": 1, "ItemQty": 0, "ItemWeight": 1.5, "ItemPrice": 2.0, "ItemAmount": 3.0, "SavingAmount": 0.0, "NetAmount": 3.0, "ItemTypeDescription": "Normal Sale", "IsGiftcardItem": 0, "MSUQty": 1 },
+    { "ItemCode": "00001234500012", "ItemSeqNo": 2, "ItemQty": 1, "ItemWeight": 0.0, "ItemPrice": 4.49, "ItemAmount": 4.49, "SavingAmount": 0.5, "NetAmount": 4.49, "ItemTypeDescription": "Normal Sale", "IsGiftcardItem": 0, "MSUQty": 1 },
+    { "ItemCode": "00001234500029", "ItemSeqNo": 3, "ItemQty": 1, "ItemWeight": 0.0, "ItemPrice": 6.0, "ItemAmount": 6.0, "SavingAmount": 0.0, "NetAmount": 6.0, "ItemTypeDescription": "Normal Sale", "IsGiftcardItem": 0, "MSUQty": 1 },
+    { "ItemCode": "00000000700003", "ItemSeqNo": 4, "ItemQty": 1, "ItemWeight": 0.0, "ItemPrice": 6.0, "ItemAmount": 6.0, "SavingAmount": 6.0, "NetAmount": 0.0, "ItemTypeDescription": "Normal Sale", "IsGiftcardItem": 0, "MSUQty": 1 },
+    { "ItemCode": "00000000099999", "ItemSeqNo": 5, "ItemQty": 1, "ItemWeight": 0.0, "ItemPrice": -1.0, "ItemAmount": -1.0, "SavingAmount": 0.0, "NetAmount": -1.0, "ItemTypeDescription": "Vendor Coupon", "IsGiftcardItem": 0, "MSUQty": 1 }
+  ],
+  "ReceiptTenderLineItems": [{ "TenderNumberDescription": "Credit Card", "TenderAmount": 13.56 }],
+  "TransactionKey": "FIXTURE_KEY_1",
+  "ReceiptId": "9999A1B100200",
+  "FacilityId": 9999,
+  "TransactionDate": "2020-01-15T16:38:00",
+  "FacilityName": "Sample Plaza",
+  "Amount": 13.56,
+  "ItemCount": 5
+}

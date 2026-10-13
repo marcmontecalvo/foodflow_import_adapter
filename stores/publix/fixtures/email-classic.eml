@@ -1,0 +1,82 @@
+From: "Publix Super Markets" <no-reply@exact.publix.com>
+To: shopper@example.invalid
+Subject: Your Publix receipt.
+Date: Wed, 15 Jan 2020 16:45:00 -0500
+Message-ID: <fixture-22406618@example.invalid>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="fixture-boundary"
+
+--fixture-boundary
+Content-Type: text/plain; charset="utf-8"
+
+Your Publix receipt is in the HTML part of this message.
+
+--fixture-boundary
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+<html><head><title>Your Publix receipt.</title><style>td { color: #000; }</style></head>
+<body>
+<table>
+<tr>
+    <td align="center"><img src="https://example.invalid/publix_logo.png" width="260" border="0"></td>
+</tr>
+<tr>
+    <td align="center" style="font-family: monospace; font-size: 13px;">Sample Plaza</td>
+</tr>
+<tr>
+    <td align="center" style="font-family: monospace; font-size: 13px;">100 Example Ave<br>Sampletown, FL 00000</td>
+</tr>
+<tr>
+    <td align="center" style="font-family: monospace; font-size: 13px;">Store Manager: Pat Example</td>
+</tr>
+<tr>
+    <td align="center" style="font-family: monospace; font-size: 13px;">555-010-0100</td>
+</tr>
+<tr>
+    <td align="center" style="font-family: monospace; font-size: 13px;"></td>
+</tr>
+<tr>
+    <td align="center" style="font-family: monospace; font-size: 13px; padding-top:10px;"><pre>  OAT CEREAL                    4.99   F
+     You Saved        1.00              
+  SPARKLING WATER               5.49 T  
+  VENDOR COUPON                -1.00   F
+  GREEK YOGURT                  6.00   F
+  GREEK YOGURT                  6.00   F
+     Promotion                 -6.00   F
+  PASTA SAUCE                           
+  2 @   2 FOR      5.00         5.00   F
+     You Saved        1.58              
+  GALA APPLES                           
+  1.50 lb @     2.00/ lb        3.00   F
+  COLA 12PK                     8.99 T  
+Voided Item                             
+  COLA 12PK                    -8.99 T  
+    Order Total                23.48    
+      Sales Tax                 0.38    
+    Grand Total                23.86    
+ Credit          Payment       23.86    
+  Change                        0.00    
+Savings Summary                         
+  VENDOR COUPON                 1.00    
+  Special Price Savings         8.58    
+**************************************  
+*       Your Savings at Publix       *  
+*                 9.58               *  
+**************************************  
+      Receipt ID: 9999 A1B 100 200      
+ - - - - - - - - - - - - - - - - - - -  
+      Acct #: XXXXXXXXXXXX0000          
+      Amount: $23.86                    
+ - - - - - - - - - - - - - - - - - - -  
+Your cashier was Sam                    
+01/15/2020 16:38 S9999  R110 6985 C0122 
+
+       Publix Super Markets, Inc.       
+</pre></td>
+</tr>
+</table>
+<p>This email was sent to shopper@example.invalid. Please do not reply to this email.</p>
+</body></html>
+
+--fixture-boundary--

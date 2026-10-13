@@ -1,1 +1,12 @@
-{"authMethod":"curl_import","detailDelayHours":24,"displayName":"Publix","lastVerified":"2026-10-13","notes":"API: services.publix.com/api/v1/PurchaseHistory (list) + /detail?transactionKey=. Auth is a Bearer AccessTokenJwt cookie plus EcmsId header (Azure B2C, ~1h token life). Detail returns Products, ReceiptLineItems, tenders, totals, barcode, and ReceiptText — the same receipt text the email parser consumes, so api/ and email/ share normalize/.","retentionDays":180,"sources":["api","email"],"store":"publix"}
+{
+  "store": "publix",
+  "displayName": "Publix",
+  "sources": ["api", "email"],
+  "authMethod": "curl_import",
+  "timeZone": "America/New_York",
+  "retentionDays": 180,
+  "detailDelayHours": 24,
+  "fallbackHoldHours": 48,
+  "lastVerified": "2026-10-13",
+  "notes": "API: services.publix.com/api/v1/PurchaseHistory (list) + /detail?transactionKey=. Auth is a Bearer AccessTokenJwt cookie plus EcmsId header (Azure B2C, ~1h token life). Detail returns Products, ReceiptLineItems, tenders, totals, barcode, and ReceiptText — the same receipt text the email parser consumes, so api/ and email/ share normalize/. timeZone is the zone receipt times are read in; stores in the Central zone print Central time."
+}

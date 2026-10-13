@@ -1,0 +1,19 @@
+{
+  "name": "foodflow-import-adapter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Store receipt adapters for FoodFlow",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "ffimport": "node core/cli.ts",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "typescript": "^5.9.3"
+  }
+}

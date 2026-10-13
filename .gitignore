@@ -1,0 +1,7 @@
+node_modules/
+# Raw archive, normalized output, sessions and upload state: all household data.
+data/
+.env
+*.eml
+!stores/*/fixtures/*.eml
+.DS_Store
