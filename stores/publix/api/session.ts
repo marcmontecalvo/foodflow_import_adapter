@@ -3,8 +3,10 @@ import { readPrivateJson, writePrivateJson } from "../../../shared/files.ts";
 import { minutesLeft } from "../../../shared/jwt.ts";
 
 /**
- * Publix signs in through Azure AD B2C with 2FA, so the session is imported
- * from the user's own browser ("Copy as cURL") instead of automating a login.
+ * Publix signs in through Azure AD B2C with 2FA, so the login is never
+ * automated: the session comes from the user's own sign-in, either in the
+ * account's browser profile (browser.ts, renews itself) or as a pasted
+ * "Copy as cURL" (one hour, for a quick test).
  * The purchase-history API wants two things: a Bearer access token (about an
  * hour of life) and the customer's EcmsId.
  */
@@ -27,23 +29,29 @@ function jsonCookie(value: string | undefined): Record<string, unknown> {
   }
 }
 
+/** The signed-in site keeps the token in the AccessTokenJwt cookie and the EcmsId inside the User cookie. */
+export function sessionFromCookies(cookies: Record<string, string>, userAgent: string | null, now: Date): PublixSession | null {
+  const token = (cookies["AccessTokenJwt"] ?? "").trim();
+  const ecmsId =
+    String(jsonCookie(cookies["User"]).EcmsId ?? "").trim() ||
+    String(jsonCookie(cookies["CartMicroserviceInfo"]).UserID ?? "").trim();
+  return token && ecmsId ? { token, ecmsId, userAgent, savedAt: now.toISOString() } : null;
+}
+
 /**
  * Either kind of copied request works: the purchase-history XHR (carries
  * Authorization + EcmsId headers) or any signed-in www.publix.com request
- * (carries the token in the AccessTokenJwt cookie and the EcmsId inside the
- * User cookie).
+ * (carries both in its cookies).
  */
 export function sessionFromCurl(curlText: string, now: Date): PublixSession {
   const { headers, cookies } = parseCurl(curlText);
-  let token = (headers["authorization"] ?? "").replace(/^Bearer\s+/i, "").trim();
-  let ecmsId = (headers["ecmsid"] ?? "").trim();
-  if (!token || !ecmsId) {
-    token = token || (cookies["AccessTokenJwt"] ?? "").trim();
-    ecmsId =
-      ecmsId ||
-      String(jsonCookie(cookies["User"]).EcmsId ?? "").trim() ||
-      String(jsonCookie(cookies["CartMicroserviceInfo"]).UserID ?? "").trim();
-  }
+  const fromCookies = sessionFromCookies(cookies, null, now);
+  const token = (headers["authorization"] ?? "").replace(/^Bearer\s+/i, "").trim() || (cookies["AccessTokenJwt"] ?? "").trim();
+  const ecmsId =
+    (headers["ecmsid"] ?? "").trim() ||
+    fromCookies?.ecmsId ||
+    String(jsonCookie(cookies["User"]).EcmsId ?? "").trim() ||
+    String(jsonCookie(cookies["CartMicroserviceInfo"]).UserID ?? "").trim();
   if (!token || !ecmsId) {
     throw new Error(
       "No Publix credentials in that cURL. Sign in at publix.com, open Account > Purchases with DevTools' Network tab " +

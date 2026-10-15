@@ -32,24 +32,34 @@ Then, for each household member's store account (`--account` is a label you
 choose, e.g. `marc`, `lisa`):
 
 ```bash
-# Publix API: import a session from your browser (it lasts about an hour)
-pbpaste | npm run ffimport -- auth publix --account marc
+# Publix API: sign in once in a browser window; the session then renews itself
+npm run ffimport -- login publix --account marc
+
+# see what would be uploaded without sending anything
+npm run ffimport -- run publix --account marc --dry-run
 
 # capture + normalize + upload, from every source the account has
 npm run ffimport -- run publix --account marc
 
-# see what would be uploaded without sending anything
-npm run ffimport -- run publix --account marc --dry-run
+# keep doing that every 6 hours until stopped
+npm run ffimport -- watch publix --account marc --every 6h
 ```
+
+FoodFlow has to be running for `upload`, `run` and `watch` to deliver
+(`npm run dev` or `npm start` in the FoodFlow checkout, at `FOODFLOW_URL`).
+If it is down, the cycle stops before uploading and the next one sends
+whatever is waiting; captured receipts stay in the archive either way.
 
 | Command | What it does |
 |---|---|
 | `stores` | List the adapters and when each was last verified. |
-| `auth <store>` | Save a session from a pasted "Copy as cURL" (`--curl-file` or stdin). |
+| `login <store>` | Sign in once in a browser window. The sign-in is kept in a browser profile for the account and reused to renew the session. |
+| `auth <store>` | Save a short-lived session from a pasted "Copy as cURL" (`--curl-file` or stdin). Good for a quick test. |
 | `capture <store>` | Fetch raw receipts into the archive. `--source api,email`, `--from`/`--to`, `--eml <file-or-dir>`, `--refetch`. |
 | `normalize <store>` | Rebuild the normalized JSONL from the archive. No network. |
 | `upload <store>` | Normalize, then send what FoodFlow doesn't have yet. `--dry-run`, `--hold-hours`. |
 | `run <store>` | `capture`, `normalize`, `upload` in one go. |
+| `watch <store>` | `run` now and again every `--every` (default `6h`; `90m`, `12h`, `1d`). A failed cycle is reported and the next still runs. |
 | `status <store>` | Session state, archive and upload counts, inbox path. |
 
 Everything the importer keeps lives under `FFIMPORT_DATA_DIR` (default
@@ -154,11 +164,28 @@ Sources, in preference order: `api`, then `email`. Both produce the same
 `externalId` for a purchase, the printed receipt ID without spaces
 (`9999 A1B 100 200` -> `9999A1B100200`).
 
-**API.** Publix signs in through Azure AD B2C with 2FA, so the session is
-imported rather than automated: sign in at publix.com, open Account >
-Purchases with DevTools' Network tab open, right-click the request to
-`services.publix.com/api/v1/PurchaseHistory`, Copy as cURL, and pipe it to
-`ffimport auth publix --account <label>`. The token lasts about an hour;
+**API.** Publix signs in through Azure AD B2C with 2FA, so the login is never
+automated; you sign in yourself, one of two ways:
+
+- `ffimport login publix --account <label>` opens your installed Chrome (or
+  Edge/Chromium; `FFIMPORT_BROWSER` picks one) on a profile kept for that
+  account under `data/accounts/publix/<label>/browser-profile`. Sign in
+  there, with "keep me signed in" if offered. The API token lasts about an
+  hour, so each later run reopens that profile on the purchases page, lets
+  the site renew the token, and reads it from the cookies. It tries headless
+  first and a visible window second; `FFIMPORT_HEADLESS=0` goes straight to
+  the visible window. The profile holds your Publix sign-in: treat `data/`
+  as private.
+- `ffimport auth publix --account <label>` takes a pasted cURL: with
+  DevTools' Network tab open on Account > Purchases, right-click the request
+  to `services.publix.com/api/v1/PurchaseHistory`, Copy as cURL, and pipe it
+  in. That session lasts the hour and does not renew.
+
+When the sign-in itself lapses, the API capture fails with a message to run
+`login` again, and email receipts keep flowing meanwhile. How long Publix
+keeps a sign-in alive is not documented; a `watch` every 6 hours keeps it in
+use.
+
 Publix keeps about 180 days of history. Purchases younger than 24 hours are
 left for a later run, because Publix publishes product detail a day or so
 after the sale; a detail that comes back without product names is not
@@ -168,7 +195,8 @@ The API gives catalog product names, sizes and UPCs, which is why it is
 preferred. It is also undocumented. The endpoints and field meanings here
 follow [brett6320/publix_receipt_archiver](https://github.com/brett6320/publix_receipt_archiver),
 which worked them out; none of its code is used. Not yet confirmed against a
-live session from this code: that the service accepts HTTP/1.1 requests from
+live session from this code: that the browser profile renews the token
+unattended (and in headless mode), that the service accepts HTTP/1.1 requests from
 Node (the archiver uses HTTP/2), and that line `NetAmount`s plus `TaxAmount`
 add up to `GrandTotal` on taxed receipts (if they don't, FoodFlow marks the
 receipt `needs_review` and `normalize` reports it).

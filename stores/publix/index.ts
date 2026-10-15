@@ -1,4 +1,5 @@
 import type { StoreAdapter } from "../../core/adapter.ts";
+import { browserLogin, hasBrowserProfile } from "./api/browser.ts";
 import { captureApi } from "./api/capture.ts";
 import { describeSession, loadSession, saveSession, sessionFromCurl } from "./api/session.ts";
 import { captureEmail } from "./email/capture.ts";
@@ -12,8 +13,13 @@ const publix: StoreAdapter = {
     saveSession(accountDir, session);
     return describeSession(session, now);
   },
+  async login({ accountDir, log }) {
+    const session = await browserLogin(accountDir, log);
+    return `signed in; ${describeSession(session, new Date())}, renewed from the browser profile on later runs`;
+  },
   sessionStatus({ accountDir, now }) {
-    return describeSession(loadSession(accountDir), now);
+    const renews = hasBrowserProfile(accountDir) ? " (renews from the browser profile)" : " (no browser sign-in; will not renew)";
+    return describeSession(loadSession(accountDir), now) + renews;
   },
 };
 

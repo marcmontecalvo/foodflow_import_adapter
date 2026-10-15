@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from "node:fs";
+import { setTimeout as sleep } from "node:timers/promises";
 import { parseArgs } from "node:util";
 import { listStores, loadStore } from "./adapter.ts";
 import { AccountArchive } from "./archive.ts";
@@ -10,12 +11,14 @@ import { capture, normalize, upload, type CaptureSummary, type NormalizeSummary,
 const USAGE = `ffimport: store receipt adapters for FoodFlow
 
   ffimport stores
-  ffimport auth      <store> --account <label> [--curl-file <path>]   (or pipe the cURL on stdin)
+  ffimport login     <store> --account <label>                        sign in once in a browser window; renews itself
+  ffimport auth      <store> --account <label> [--curl-file <path>]   one-hour session from a pasted cURL (or stdin)
   ffimport capture   <store> --account <label> [--source api,email] [--from YYYY-MM-DD] [--to YYYY-MM-DD]
                                                [--eml <file-or-dir> ...] [--refetch]
   ffimport normalize <store> --account <label>
   ffimport upload    <store> --account <label> [--dry-run] [--hold-hours <n>]
   ffimport run       <store> --account <label> [capture and upload options]   capture + normalize + upload
+  ffimport watch     <store> --account <label> [--every 6h] [run options]     run now, then again every interval
   ffimport status    <store> --account <label>
 
 --account names whose store account this is (e.g. marc). Each account keeps its
@@ -64,6 +67,14 @@ function printUpload(summary: UploadSummary): void {
   if (summary.aborted) console.log(`  STOPPED: ${summary.aborted}`);
 }
 
+/** "6h", "90m", "1d"; a bare number is hours. Null when unreadable or under 15 minutes. */
+export function intervalMs(text: string): number | null {
+  const m = text.trim().match(/^(\d+(?:\.\d+)?)\s*([mhd]?)$/i);
+  if (!m) return null;
+  const ms = Number(m[1]) * { m: 60_000, h: 3_600_000, d: 86_400_000 }[(m[2] || "h").toLowerCase() as "m" | "h" | "d"];
+  return ms >= 15 * 60_000 ? ms : null;
+}
+
 async function readStdin(): Promise<string> {
   if (process.stdin.isTTY) return "";
   const chunks: Buffer[] = [];
@@ -86,6 +97,7 @@ async function main(): Promise<number> {
       "dry-run": { type: "boolean" },
       "hold-hours": { type: "string" },
       "curl-file": { type: "string" },
+      every: { type: "string" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -102,7 +114,7 @@ async function main(): Promise<number> {
     }
     return 0;
   }
-  if (!["auth", "capture", "normalize", "upload", "run", "status"].includes(command)) fail(`Unknown command "${command}".\n\n${USAGE}`);
+  if (!["login", "auth", "capture", "normalize", "upload", "run", "watch", "status"].includes(command)) fail(`Unknown command "${command}".\n\n${USAGE}`);
   if (!store) fail(`${command} needs a store.\n\n${USAGE}`);
   if (!values.account) fail("--account <label> is required (whose store account this is, e.g. --account marc).");
   for (const date of [values.from, values.to]) {
@@ -111,7 +123,9 @@ async function main(): Promise<number> {
 
   const loaded = await loadStore(store);
   const archive = new AccountArchive(store, values.account);
-  const now = new Date();
+  let now = new Date();
+  const everyMs = intervalMs(values.every ?? "6h");
+  if (everyMs === null) fail('--every takes an interval such as 6h, 90m or 1d (15 minutes or more).');
 
   const sources = values.source?.split(",").map((s) => s.trim()) as CaptureSource[] | undefined;
   for (const s of sources ?? []) {
@@ -119,12 +133,12 @@ async function main(): Promise<number> {
   }
   const holdHours = values["hold-hours"] === undefined ? undefined : Number(values["hold-hours"]);
   if (holdHours !== undefined && !(holdHours >= 0)) fail("--hold-hours must be a number of hours, 0 or more.");
-  const captureOpts = {
+  const captureOpts = () => ({
     sources,
     options: { from: values.from, to: values.to, paths: values.eml, refetch: values.refetch },
     now,
     log,
-  };
+  });
   const doUpload = async (summary: NormalizeSummary) => {
     const dryRun = values["dry-run"] ?? false;
     const client = dryRun ? null : new FoodFlowClient(foodFlowConfigFromEnv());
@@ -133,7 +147,23 @@ async function main(): Promise<number> {
     return result.aborted || result.failed.length ? 1 : 0;
   };
 
+  const runOnce = async () => {
+    const captured = await capture(loaded, archive, captureOpts());
+    printCapture(captured);
+    const summary = normalize(loaded, archive);
+    printNormalize(summary, archive.normalizedPath);
+    const code = await doUpload(summary);
+    // A failed source is reported but doesn't fail the run when another source delivered.
+    const allSourcesFailed = Object.values(captured.sources).every((s) => s.error);
+    return code || (allSourcesFailed || summary.invalid.length ? 1 : 0);
+  };
+
   switch (command) {
+    case "login": {
+      if (!loaded.adapter.login) fail(`${loaded.manifest.displayName} has no browser sign-in.`);
+      console.log(`${loaded.manifest.displayName} (${archive.accountLabel}): ${await loaded.adapter.login({ accountDir: archive.accountDir, log })}`);
+      return 0;
+    }
     case "auth": {
       if (!loaded.adapter.importSession) fail(`${loaded.manifest.displayName} has no session to import.`);
       const input = values["curl-file"] ? readFileSync(values["curl-file"], "utf8") : await readStdin();
@@ -142,7 +172,7 @@ async function main(): Promise<number> {
       return 0;
     }
     case "capture": {
-      const summary = await capture(loaded, archive, captureOpts);
+      const summary = await capture(loaded, archive, captureOpts());
       printCapture(summary);
       return Object.values(summary.sources).some((s) => s.error) ? 1 : 0;
     }
@@ -156,15 +186,20 @@ async function main(): Promise<number> {
       printNormalize(summary, archive.normalizedPath);
       return doUpload(summary);
     }
-    case "run": {
-      const captured = await capture(loaded, archive, captureOpts);
-      printCapture(captured);
-      const summary = normalize(loaded, archive);
-      printNormalize(summary, archive.normalizedPath);
-      const code = await doUpload(summary);
-      // A failed source is reported but doesn't fail the run when another source delivered.
-      const allSourcesFailed = Object.values(captured.sources).every((s) => s.error);
-      return code || (allSourcesFailed || summary.invalid.length ? 1 : 0);
+    case "run":
+      return runOnce();
+    case "watch": {
+      // Runs until stopped. A failed cycle is reported and the next one still happens.
+      for (;;) {
+        now = new Date();
+        console.log(`\n[${now.toISOString()}] ${loaded.manifest.displayName} (${archive.accountLabel})`);
+        const code = await runOnce().catch((err) => {
+          console.log(`  FAILED: ${(err as Error).message}`);
+          return 1;
+        });
+        console.log(`${code ? "finished with problems" : "ok"}; next run ${new Date(Date.now() + everyMs).toLocaleString()}`);
+        await sleep(everyMs);
+      }
     }
     case "status": {
       const ledger = archive.readLedger();

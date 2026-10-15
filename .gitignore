@@ -1,7 +1,33 @@
-node_modules/
 # Raw archive, normalized output, sessions and upload state: all household data.
 data/
-.env
 *.eml
 !stores/*/fixtures/*.eml
+node_modules/
+.next/
+out/
+dist/
+.env
+.env.local
+*.log
+npm-debug.log*
 .DS_Store
+
+# SQLite dev database
+prisma/*.db
+prisma/*.db-journal
+
+*.tsbuildinfo
+next-env.d.ts
+
+# Real receipt emails contain personal purchase/payment data — never commit
+# sample .eml files, only the code that parses them.
+*.eml
+
+# Cached downloaded source files for ingestion scripts (re-fetchable).
+.cache/
+prisma/*.db-wal
+prisma/*.db-shm
+prisma/*.db.bak-*
+*.db-wal
+*.db-shm
+/dev.db

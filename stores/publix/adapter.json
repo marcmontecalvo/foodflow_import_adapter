@@ -2,7 +2,7 @@
   "store": "publix",
   "displayName": "Publix",
   "sources": ["api", "email"],
-  "authMethod": "curl_import",
+  "authMethod": "browser_profile",
   "timeZone": "America/New_York",
   "retentionDays": 180,
   "detailDelayHours": 24,

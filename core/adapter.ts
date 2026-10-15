@@ -78,6 +78,8 @@ export interface StoreAdapter {
   normalize(raw: RawReceipt, ctx: NormalizeContext): NormalizeResult;
   /** Save a session captured out of band (e.g. a pasted cURL). Returns a one-line status. */
   importSession?(input: string, ctx: { accountDir: string; now: Date }): string;
+  /** Interactive sign-in that leaves a session able to renew itself. Returns a one-line status. */
+  login?(ctx: { accountDir: string; log(message: string): void }): Promise<string>;
   /** One-line session state for `status`. */
   sessionStatus?(ctx: { accountDir: string; now: Date }): string;
 }

@@ -4,6 +4,7 @@ import { minutesLeft } from "../../../shared/jwt.ts";
 import { isoDate, parseLocalIso, wallTimeToIso } from "../../../shared/time.ts";
 import { decodeReceiptText, isUnpublished, type ApiPayload } from "../normalize/fromApi.ts";
 import { canonicalReceiptId, findReceiptId } from "../normalize/ids.ts";
+import { MIN_MINUTES, hasBrowserProfile, renewSession } from "./browser.ts";
 import { loadSession, requestHeaders } from "./session.ts";
 
 /**
@@ -23,8 +24,7 @@ function apiBase(): string {
 }
 
 const REIMPORT = (account: string) =>
-  `Import a fresh one: copy the PurchaseHistory request from your browser as cURL, then run ` +
-  `"ffimport auth publix --account ${account}".`;
+  `Sign in again with "ffimport login publix --account ${account}" (or paste a cURL to "ffimport auth").`;
 
 /** The list row's own identity. It differs from the detail's printed receipt ID, so it is what incremental runs skip on. */
 function listKey(txn: Record<string, unknown>): string {
@@ -33,9 +33,15 @@ function listKey(txn: Record<string, unknown>): string {
 
 export async function* captureApi(ctx: CaptureContext): AsyncGenerator<RawReceipt> {
   const { manifest, options, now, log } = ctx;
-  const session = loadSession(ctx.accountDir);
+  let session = loadSession(ctx.accountDir);
+  let checkedAt = now;
+  if ((!session || (minutesLeft(session.token, now) ?? 60) <= MIN_MINUTES) && hasBrowserProfile(ctx.accountDir)) {
+    log("api: renewing the session from the browser profile");
+    session = (await renewSession(ctx.accountDir, log)) ?? session;
+    checkedAt = new Date();
+  }
   if (!session) throw new Error(`No Publix API session for account "${ctx.accountLabel}". ${REIMPORT(ctx.accountLabel)}`);
-  const left = minutesLeft(session.token, now);
+  const left = minutesLeft(session.token, checkedAt);
   if (left !== null && left <= 0) {
     throw new Error(`The Publix API session expired ${-left} min ago (tokens last about an hour). ${REIMPORT(ctx.accountLabel)}`);
   }
